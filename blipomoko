@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-VERSION = 'pre-0.1'
+VERSION = '0.0.99'
 print "Blipomoko " + VERSION
 
 #import blipapi
@@ -456,7 +456,7 @@ box = elementary.Box(win)
 box.show()
 
 layout = elementary.Layout(win)
-layout.file_set('blipomoko.edj', 'layout')
+layout.file_set('/usr/share/blipomoko/blipomoko.edj', 'layout')
 layout.show()
 layout.content_set('bg', bg)
 
