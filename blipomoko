@@ -2,13 +2,10 @@
 VERSION = '0.0.99'
 print "Blipomoko " + VERSION
 
-#import blipapi
-from blipapi import BlipApi
-# needed: python-json!
-import elementary,edje
+import blipapi
+import elementary, edje
 from functools import partial
-import os
-import ConfigParser
+import os, ConfigParser
 
 CONFIG_FILE = os.path.expanduser('~')+'/.blipomoko'
 UAGENT = 'Blipomoko '+VERSION
@@ -442,7 +439,7 @@ def destroy(*args,**kwargs):
 
 def blip_connect():
   global blip
-  blip = BlipApi(login, password)
+  blip = blipapi.BlipApi(login, password)
   blip.uagent=UAGENT
 
 elementary.init()
