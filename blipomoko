@@ -1,0 +1,567 @@
+#!/usr/bin/env python
+
+print "Blipomoko"
+
+#import blipapi
+from blipapi import BlipApi
+# needed: python-json!
+import elementary,edje
+from functools import partial
+import os
+import ConfigParser
+
+CONFIG_FILE = os.path.expanduser('~')+'/.blipomoko'
+UAGENT = 'Blipomoko pre-0.1'
+
+login = None
+password = None
+
+def save_auth(login, password):
+  parser = ConfigParser.SafeConfigParser()
+  parser.read(CONFIG_FILE)
+  try:
+    parser.set( 'auth', 'login', login )
+    parser.set( 'auth', 'password', password )
+  except ConfigParser.NoSectionError:
+    parser.add_section( 'auth' )
+    parser.set( 'auth', 'login', login )
+    parser.set( 'auth', 'password', password )
+  with open(CONFIG_FILE,'w+') as f:
+    parser.write(f)
+
+def load_auth():
+  global login, password
+  parser = ConfigParser.SafeConfigParser()
+  parser.read(CONFIG_FILE)
+  try:
+    options = parser.options( 'auth' )
+  except ConfigParser.NoSectionError:
+    return False
+  else:
+    login = parser.get('auth', 'login' )
+    password = parser.get('auth', 'password' )
+    return True
+
+def nick_from_user(user):
+  if user.startswith('/users/'):
+    user=user[7:]
+  return user
+
+def dashboard(user=None):
+  parse_updates(blip.dashboard_read(user=user))
+
+def updates(user=None):
+  parse_updates(blip.update_read(user=user))
+
+def bliposphere():
+  parse_updates(blip.bliposphere_read())
+
+def tag(text):
+  parse_updates(blip.tag_read(text))
+
+def display_error(update):
+  dia = elementary.InnerWindow(win)
+  dia.style_set('minimal_vertical')
+  win.resize_object_add(dia)
+  dia.show()
+  box = elementary.Box(win)
+  box.show()
+  dia.content_set(box)
+  frame = elementary.Frame(win)
+  frame.size_hint_align_set(-1.0, -1.0)
+  frame.size_hint_weight_set(1.0, 1.0)
+  frame.show()
+  frame.label_set('Error')
+  label = elementary.AnchorBlock(win)
+  label.show()
+  frame.content_set(label)
+  label.text_set( str(update['status_code']) +': '+update['status_body'])
+  button = elementary.Button(win)
+  button.label_set('Close')
+  button.size_hint_align_set(-1.0, -1.0)
+  button.size_hint_weight_set(1.0, 1.0)
+  button.show()
+  button.clicked = partial(close_more, dia)
+  box.pack_start(frame)
+  box.pack_end(button)
+  dia.activate()
+
+def check_success(update):
+  if update['status_code']==200:
+    return True
+  else:
+    display_error(update)
+    return False
+
+def parse_updates(updates):
+  if check_success(updates):
+    updates=updates['body']
+    updates.reverse()
+    for update in updates:
+      if update['type']=='Status':
+        handle_status(update)
+      elif update['type']=='DirectedMessage':
+        handle_directed(update)
+      elif update['type']=='PrivateMessage':
+        handle_private(update)
+      elif update['type']=='Notice':
+        handle_notice(update)
+      else:
+        unknown(update)
+
+def handle_status(update):
+  anch = elementary.AnchorBlock(win)
+  body = entry.utf8_to_markup(update['body'])
+  if 'pictures_path' in update:
+    body = body + ' [FOTO]'
+  anch.text_set(body)
+  anch.show()
+  fr = elementary.Frame(win)
+  fr.label_set(nick_from_user(update['user_path'])+':')
+  fr.content_set(anch)
+  fr.size_hint_align_set(-1.0,0.0)
+  fr.size_hint_weight_set(1.0,0.0)
+  fr.show()
+  blibox.pack_start(fr)
+  bliboxcontent.append(fr)
+
+def handle_directed(update):
+#  print nick_from_user(update['user_path']) + '>'+nick_from_user(update['recipient_path'])+': ' + update['body']
+  anch = elementary.AnchorBlock(win)
+  body = entry.utf8_to_markup(update['body'])
+  anch.text_set(body)
+  anch.show()
+  fr = elementary.Frame(win)
+  fr.label_set(nick_from_user(update['user_path'])+' > '+nick_from_user(update['recipient_path'])+':')
+  fr.content_set(anch)
+  fr.size_hint_align_set(-1.0,0.0)
+  fr.size_hint_weight_set(1.0,0.0)
+  fr.show()
+  blibox.pack_start(fr)
+  bliboxcontent.append(fr)
+
+def handle_private(update):
+#  print nick_from_user(update['user_path']) + ' >> '+nick_from_user(update['recipient_path'])+': ' + update['body']
+  anch = elementary.AnchorBlock(win)
+  body = entry.utf8_to_markup(update['body'])
+  anch.text_set(body)
+  anch.show()
+  fr = elementary.Frame(win)
+  fr.label_set(nick_from_user(update['user_path'])+' >> '+nick_from_user(update['recipient_path'])+':')
+  fr.content_set(anch)
+  fr.size_hint_align_set(-1.0,0.0)
+  fr.size_hint_weight_set(1.0,0.0)
+  fr.show()
+  blibox.pack_start(fr)
+  bliboxcontent.append(fr)
+
+def handle_notice(update):
+  anch = elementary.AnchorBlock(win)
+  body = entry.utf8_to_markup(update['body'])
+  anch.text_set(body)
+  anch.size_hint_align_set(-1.0,0.5)
+  anch.size_hint_weight_set(1.0,0.0)
+  anch.show()
+  info = elementary.Label(win)
+  info.label_set('(i)')
+  info.scale_set(2.5)
+  info.show()
+  box = elementary.Box(win)
+  box.horizontal_set(True)
+  box.size_hint_align_set(-1.0,0.0)
+  box.size_hint_weight_set(1.0,0.0)
+  box.show()
+  box.pack_start(info)
+  box.pack_end(anch)
+  fr2 = elementary.Frame(win)
+  fr2.style_set('outdent_top')
+  fr2.content_set(box)
+  fr2.size_hint_align_set(-1.0,0.0)
+  fr2.size_hint_weight_set(1.0,0.0)
+  fr2.show()
+  fr = elementary.Frame(win)
+  fr.style_set('outdent_bottom')
+  fr.content_set(fr2)
+  fr.size_hint_align_set(-1.0,0.0)
+  fr.size_hint_weight_set(1.0,0.0)
+  fr.show()
+  blibox.pack_start(fr)
+  bliboxcontent.append(fr)
+
+def handle_unknown(update):
+  print 'UNKNOWN: '+update['type']
+  print update
+
+def clean_blibox():
+  global bliboxcontent
+  for u in bliboxcontent:
+    u.hide()
+    u.delete()
+    del u
+  bliboxcontent = []
+
+def post_blip(obj, *args, **kwargs):
+  global entrydefault
+  text=utnij(entry.markup_to_utf8(entry.entry_get()))
+  if check_success(blip.update_create(body=text)):
+    clean_blibox()
+    entry.entry_set('Type your entry here...')
+    entrydefault = True
+    dashboard()
+
+def update_clicked(obj, *args, **kwargs):
+  global entrydefault
+  if entrydefault:
+    entry.entry_set('')
+    entrydefault=False
+
+def utnij(text):
+  if text.endswith('\n'):
+    text=text[:len(text)-1]
+  return text
+
+def update_chars(obj, *args, **kwargs):
+  entryleft.label_set("%d chars left" % (160-len(utnij(obj.markup_to_utf8(obj.entry_get())))))
+
+def display_dashboard(*args,**kwargs):
+  global entrydefault
+  if entrydefault:
+    nick=None
+  else:
+    nick=utnij(entry.markup_to_utf8(entry.entry_get()))
+  clean_blibox()
+  entry.entry_set('Type your entry here...')
+  entrydefault = True
+  dashboard(nick)
+  layout.edje_get().signal_emit('dol,hide','blip,app')
+
+def display_updates(*args,**kwargs):
+  global entrydefault
+  if entrydefault:
+    nick=None
+  else:
+    nick=utnij(entry.markup_to_utf8(entry.entry_get()))
+  clean_blibox()
+  entry.entry_set('Type your entry here...')
+  entrydefault = True
+  updates(nick)
+  layout.edje_get().signal_emit('dol,hide','blip,app')
+
+def display_bliposphere(dia,*args,**kwargs):
+  global entrydefault
+  dia.delete()
+  clean_blibox()
+  entry.entry_set('Type your entry here...')
+  entrydefault = True
+  bliposphere()
+  layout.edje_get().signal_emit('dol,hide','blip,app')
+
+def display_tag(dia,*args,**kwargs):
+  global entrydefault
+  if not entrydefault:
+    dia.delete()
+    clean_blibox()
+    tag(utnij(entry.markup_to_utf8(entry.entry_get())))
+    entry.entry_set('Type your entry here...')
+    entrydefault = True
+    layout.edje_get().signal_emit('dol,hide','blip,app')
+  else:
+    print "enter tag"
+
+def close_conf(logine, passworde, dia, *args, **kwargs):
+  global login, password
+  login = utnij(logine.markup_to_utf8(logine.entry_get()))
+  password = utnij(passworde.markup_to_utf8(passworde.entry_get()))
+  save_auth(login, password)
+  close_more(dia)
+  blip_connect()
+
+def configure(*args, **kwargs):
+  layout.edje_get().signal_emit('dol,hide','blip,app')
+  dia = elementary.InnerWindow(win)
+  box = elementary.Box(dia)
+  box.show()
+  dia.content_set(box)
+  win.resize_object_add(dia)
+  dia.show()
+  dia.activate()
+
+  scroller = elementary.Scroller(win)
+  scroller.show()
+  scroller.bounce_set(0, 0)
+  scroller.size_hint_weight_set(1.0, 1.0)
+  scroller.size_hint_align_set(-1.0, -1.0)
+  box.pack_start(scroller)
+
+  oframe = elementary.Frame(win)
+  oframe.label_set("Options")
+  oframe.show()
+  oframe.style_set('pad_small')
+  oframe.size_hint_weight_set(1.0, 1.0)
+  oframe.size_hint_align_set(-1.0, -1.0)
+  scroller.content_set(oframe)
+
+  obox = elementary.Box(oframe)
+  obox.show()
+
+  hbox1 = elementary.Box(win)
+  hbox1.size_hint_weight_set(1.0, 0.0)
+  hbox1.size_hint_align_set(-1.0, 0.0)
+  hbox1.horizontal_set(True)
+  obox.pack_end(hbox1)
+  hbox1.show()
+
+  loginl = elementary.Label(win)
+  loginl.label_set('Login: ')
+  loginl.show()
+  hbox1.pack_start(loginl)
+
+  loginfr = elementary.Frame(win)
+  loginfr.style_set('outdent_top')
+  loginfr.size_hint_align_set(-1.0, 0.0)
+  loginfr.size_hint_weight_set(1.0, 0.0)
+  loginfr.show()
+
+  logine = elementary.Entry(win)
+  logine.single_line_set(True)
+  logine.show()
+  logine.size_hint_align_set(-1.0, 0.0)
+  logine.size_hint_weight_set(1.0, 0.0)
+  if login:
+    logine.entry_set(logine.utf8_to_markup(login))
+  loginfr.content_set(logine)
+  hbox1.pack_end(loginfr)
+
+  hbox2 = elementary.Box(win)
+  hbox2.size_hint_weight_set(1.0, 0.0)
+  hbox2.size_hint_align_set(-1.0, 0.0)
+  hbox2.horizontal_set(True)
+  obox.pack_end(hbox2)
+  hbox2.show()
+
+  passl = elementary.Label(win)
+  passl.label_set('Password: ')
+  passl.show()
+  hbox2.pack_start(passl)
+
+  passfr = elementary.Frame(win)
+  passfr.style_set('outdent_top')
+  passfr.size_hint_align_set(-1.0, 0.0)
+  passfr.size_hint_weight_set(1.0, 0.0)
+  passfr.show()
+
+  passworde = elementary.Entry(win)
+  passworde.show()
+  if password:
+    passworde.entry_set(passworde.utf8_to_markup(password))
+  passworde.password_set(True)
+  passworde.size_hint_align_set(-1.0, 0.0)
+  passworde.size_hint_weight_set(1.0, 0.0)
+  passfr.content_set(passworde)
+  hbox2.pack_end(passfr)
+
+  oframe.content_set(obox)
+  button = elementary.Button(win)
+  button.label_set("Close")
+  button.show()
+  button.clicked = partial(close_conf, logine, passworde, dia)
+  button.size_hint_weight_set(-1.0, 0.0)
+  button.size_hint_align_set(-1.0, 0.0)
+  box.pack_end(button)
+
+
+def close_more(dia, *args, **kwargs):
+  dia.delete()
+
+def display_more(*args, **kwargs):
+  dia = elementary.InnerWindow(win)
+  box = elementary.Box(dia)
+  box.show()
+  dia.content_set(box)
+  win.resize_object_add(dia)
+  dia.style_set('minimal')
+  dia.show()
+  spherebtn = elementary.Button(win)
+  spherebtn.label_set('Bliposphere')
+  spherebtn.clicked = partial(display_bliposphere, dia)
+  spherebtn.size_hint_align_set(-1.0,-1.0)
+  spherebtn.size_hint_weight_set(1.0,1.0)
+  spherebtn.show()
+  box.pack_end(spherebtn)
+
+  tagbtn = elementary.Button(win)
+  tagbtn.label_set('Tag')
+  tagbtn.clicked = partial(display_tag, dia)
+  tagbtn.size_hint_align_set(-1.0,-1.0)
+  tagbtn.size_hint_weight_set(1.0,1.0)
+  tagbtn.show()
+  box.pack_end(tagbtn)
+
+  closefr = elementary.Frame(win)
+  closefr.style_set('outdent_bottom')
+  closefr.show()
+
+  closebtn = elementary.Button(win)
+  closebtn.label_set('Close')
+  closebtn.clicked = partial(close_more, dia)
+  closebtn.size_hint_align_set(-1.0,-1.0)
+  closebtn.size_hint_weight_set(1.0,1.0)
+  closebtn.show()
+  closefr.content_set(closebtn)
+  box.pack_end(closefr)
+
+  dia.activate()
+
+def destroy(*args,**kwargs):
+  print 'kabum!'
+  elementary.exit()
+
+def blip_connect():
+  global blip
+  blip = BlipApi(login, password)
+  blip.uagent=UAGENT
+
+elementary.init()
+win = elementary.Window('blipomoko',0);
+bg = elementary.Background(win)
+bg.show()
+win.title_set('Blipomoko')
+win.destroy = destroy
+win.show()
+box = elementary.Box(win)
+box.show()
+
+layout = elementary.Layout(win)
+layout.file_set('blipomoko.edj', 'layout')
+layout.show()
+layout.content_set('bg', bg)
+
+#def handler(obj, event, name, *args, **kargs):
+#  print name+': '+event
+#layout.edje_get().signal_callback_add('*', '*', handler)
+
+topbox = elementary.Box(win)
+topbox.size_hint_align_set(-1.0,-1.0)
+topbox.size_hint_weight_set(1.0,1.0)
+topbox.horizontal_set(True)
+topbox.show()
+#box.pack_start(topbox)
+layout.content_set('gora', topbox)
+
+entry = elementary.Entry(win)
+entry.entry_set('Type your entry here...')
+entrydefault = True
+entry.on_mouse_down_add( update_clicked)
+entry.show()
+entry.size_hint_align_set(-1.0,-1.0)
+entry.size_hint_weight_set(1.0,1.0)
+
+entryscr = elementary.Scroller(win)
+entryscr.bounce_set(0,0)
+entryscr.size_hint_align_set(-1.0,-1.0)
+entryscr.size_hint_weight_set(1.0,1.0)
+entryscr.content_set(entry)
+entryscr.show()
+
+entrybox = elementary.Box(win)
+entrybox.show()
+entrybox.size_hint_align_set(-1.0,-1.0)
+entrybox.size_hint_weight_set(1.0,1.0)
+entrybox.pack_start(entryscr)
+
+entryleft = elementary.Label(win)
+entryleft.label_set('? chars left')
+entryleft.show()
+entry.changed = update_chars
+entryleft.size_hint_align_set(1.0,1.0)
+entrybox.pack_end(entryleft)
+
+entryfr = elementary.Frame(win)
+entryfr.style_set('pad_small')
+entryfr.content_set(entrybox)
+entryfr.show()
+entryfr.size_hint_align_set(-1.0,-1.0)
+entryfr.size_hint_weight_set(1.0,1.0)
+topbox.pack_start(entryfr)
+
+rightbox = elementary.Box(win)
+rightbox.size_hint_align_set(-1.0, -1.0)
+rightbox.size_hint_weight_set(0.0,1.0)
+rightbox.show()
+topbox.pack_end(rightbox)
+
+post = elementary.Button(win)
+post.label_set(' Post it! ')
+post.clicked = post_blip
+post.show()
+post.size_hint_align_set(-1.0, -1.0)
+post.size_hint_weight_set(0.0,1.0)
+rightbox.pack_start(post)
+
+scr = elementary.Scroller(win)
+scr.size_hint_align_set(-1.0,-1.0)
+scr.size_hint_weight_set(1.0,1.0)
+#box.pack_end(scr)
+layout.content_set('srodek', scr)
+win.resize_object_add(layout)
+scr.show()
+blibox = elementary.Box(win)
+scr.content_set(blibox)
+scr.bounce_set(0,1)
+blibox.size_hint_align_set(-1.0,0.0)
+blibox.size_hint_weight_set(1.0,0.0)
+blibox.show()
+bliboxcontent = []
+
+bottombox = elementary.Box(win)
+bottombox.horizontal_set(True)
+bottombox.show()
+layout.content_set('dol', bottombox)
+
+dashbtn = elementary.Button(win)
+dashbtn.label_set('Dashboard')
+dashbtn.clicked = display_dashboard
+dashbtn.size_hint_align_set(-1.0,-1.0)
+dashbtn.size_hint_weight_set(1.0,1.0)
+dashbtn.show()
+bottombox.pack_start(dashbtn)
+
+updatesbtn = elementary.Button(win)
+updatesbtn.label_set('Bliplog')
+updatesbtn.clicked = display_updates
+updatesbtn.size_hint_align_set(-1.0,-1.0)
+updatesbtn.size_hint_weight_set(1.0,1.0)
+updatesbtn.show()
+bottombox.pack_end(updatesbtn)
+
+morebtn = elementary.Button(win)
+morebtn.label_set('More')
+morebtn.clicked = display_more
+morebtn.size_hint_align_set(-1.0,-1.0)
+morebtn.size_hint_weight_set(1.0,1.0)
+morebtn.show()
+bottombox.pack_end(morebtn)
+
+#spherebtn = elementary.Button(win)
+#spherebtn.label_set('Bliposphere')
+#spherebtn.clicked = display_bliposphere
+#spherebtn.size_hint_align_set(-1.0,-1.0)
+#spherebtn.size_hint_weight_set(1.0,1.0)
+#spherebtn.show()
+#bottombox.pack_end(spherebtn)
+
+confbtn = elementary.Button(win)
+confbtn.label_set('Config')
+confbtn.clicked = configure
+confbtn.size_hint_align_set(-1.0,-1.0)
+confbtn.size_hint_weight_set(1.0,1.0)
+confbtn.show()
+bottombox.pack_end(confbtn)
+
+if not load_auth():
+  configure()
+
+blip_connect()
+
+elementary.run()
+elementary.shutdown()

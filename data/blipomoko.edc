@@ -1,0 +1,276 @@
+collections {
+      images {
+         image: "blip-hide.png" COMP;
+         image: "blip-expand.png" COMP;
+      }
+   group { name: "layout";
+      parts {
+         part { name: "bg";
+            type: SWALLOW;
+            description { state: "default" 0;
+ 
+            }
+         }
+         part { name: "gora";
+            type: SWALLOW;
+            description { state: "default" 0;
+               //max: 480 300;
+               rel1 {
+                  relative: 0 0;
+               }
+               rel2 {
+                  relative: 1 0.4;
+               }
+            }
+            description { state: "hidden" 0;
+               inherit: "default" 0;
+               visible: 0;
+               rel1 {
+                  relative: 0 -0.4;
+               }
+               rel2 {
+                  relative: 1 0;
+               }
+            }
+         }
+         part { name: "srodek";
+            type: SWALLOW;
+            description { state: "default" 0;
+               rel1 {
+                  relative: 0 1;
+                  to_y: "gora";
+               }
+               rel2 {
+                  relative: 1 0;
+                  to_y: "dol";
+               }
+            }
+         }
+         part { name: "dol";
+            type: SWALLOW;
+            description { state: "default" 0;
+               visible: 1;
+               rel1 {
+                  relative: 0 1;
+                  offset: 0 -100;
+               }
+               rel2 {
+                  relative: 1 1;
+                  offset: 0 0;
+               }
+            }
+            description { state: "hidden" 0;
+               inherit: "default" 0;
+               visible: 0;
+               rel1 {
+                  relative: 0 1;
+                  offset: 0 0;
+               }
+               rel2 {
+                  relative: 1 1;
+                  offset: 0 100;
+               }
+            }
+
+         }
+
+         part { name: "buttont";
+            type: RECT;
+            description { state: "default" 0;
+//               color: 20 80 255 64;
+               color: 0 0 0 32;
+               rel1 {
+                  relative: 0.5 1;
+                  offset: -50 0;
+                  to: "gora";
+               }
+               rel2 {
+                  relative: 0.5 1;
+                  offset: 50 40;
+                  to: "gora";
+               }
+            }
+            description { state: "hover" 0;
+              inherit: "default" 0;
+//              color: 20 80 255 255;
+                color: 0 0 0 64;
+            }
+         }
+         part { name: "buttonb";
+            type: RECT;
+            description { state: "default" 0;
+//               color: 20 80 255 64;
+               color: 0 0 0 32;
+               rel1 {
+                  relative: 0.5 0;
+                  offset: -50 -40;
+                  to: "dol";
+               }
+               rel2 {
+                  relative: 0.5 0;
+                  offset: 50 0;
+                  to: "dol";
+               }
+            }
+            description { state: "hover" 0;
+              inherit: "default" 0;
+//              color: 20 80 255 255;
+                color: 0 0 0 64;
+            }
+         }
+
+         part { name: "btnicont";
+              type: IMAGE;
+              repeat_events: 1;
+              description { state: "default" 0;
+                   rel1.relative: 0 0;
+                   rel1.to: "buttont";
+                   rel2.relative: 1 1;
+                   rel2.to: "buttont";
+                   image.normal: "blip-hide.png";
+              }
+              description { state: "hidden" 0;
+                inherit: "default" 0;
+                image.normal: "blip-expand.png";
+              }
+      }
+         part { name: "btniconb";
+              type: IMAGE;
+              repeat_events: 1;
+              description { state: "default" 0;
+                   rel1.relative: 0 0;
+                   rel1.to: "buttonb";
+                   rel2.relative: 1 1;
+                   rel2.to: "buttonb";
+                   image.normal: "blip-expand.png";
+              }
+              description { state: "hidden" 0;
+                inherit: "default" 0;
+                image.normal: "blip-hide.png";
+              }
+      }
+
+      }
+      programs {
+        program {
+           name: "btnhovert";
+           signal: "mouse,down,1";
+           source: "buttont";
+           action: STATE_SET "hover" 0;
+           transition: LINEAR 0.25;
+           target: "buttont";
+        }
+        program {
+           name: "btnhoverb";
+           signal: "mouse,down,1";
+           source: "buttonb";
+           action: STATE_SET "hover" 0;
+           transition: LINEAR 0.25;
+           target: "buttonb";
+        }
+
+        program {
+           name: "showorhidet";
+           signal: "mouse,clicked,1";
+           source: "buttont";
+           script {
+               new st[31];
+               new Float:vl;
+               get_state(PART:"btnicont", st, 30, vl);
+               if (!strcmp(st, "hidden")) {
+                 emit("expand", "blip,gora")
+                 set_state(PART:"btnicont", "default", 0.0);
+               }
+               else {
+                 emit("hide", "blip,gora")
+                 set_state(PART:"btnicont", "hidden", 0.0);
+               }
+           }
+        }
+        program {
+           name: "showorhideb";
+           signal: "mouse,clicked,1";
+           source: "buttonb";
+           script {
+               new st[31];
+               new Float:vl;
+               get_state(PART:"btniconb", st, 30, vl);
+               if (!strcmp(st, "hidden")) {
+                 emit("expand", "blip,dol")
+                 set_state(PART:"btniconb", "default", 0.0);
+               }
+               else {
+                 emit("hide", "blip,dol")
+                 set_state(PART:"btniconb", "hidden", 0.0);
+               }
+           }
+        }
+
+        program {
+           name: "showt";
+           signal: "expand";
+           source: "blip,gora";
+           action: STATE_SET "default" 0;
+           transition: LINEAR 0.5;
+           target: "gora";
+        }
+
+        program {
+           name: "hidet";
+           signal: "hide";
+           source: "blip,gora";
+           action: STATE_SET "hidden" 0;
+           transition: LINEAR 0.5;
+           target: "gora";
+        }
+
+        program {
+           name: "dolhide";
+           signal: "dol,hide";
+           source: "blip,app";
+           script {
+             emit("hide", "blip,dol");
+             set_state(PART:"btniconb", "hidden", 0.0);
+           }
+        }
+
+        program {
+           name: "showb";
+           signal: "expand";
+           source: "blip,dol";
+           action: STATE_SET "default" 0;
+           transition: LINEAR 0.5;
+           target: "dol";
+        }
+
+        program {
+           name: "hideb";
+           signal: "hide";
+           source: "blip,dol";
+           action: STATE_SET "hidden" 0;
+           transition: LINEAR 0.5;
+           target: "dol";
+        }
+
+
+        program {
+           name: "btnunhoverb";
+           signal: "mouse,up,1";
+           source: "buttonb";
+           action: STATE_SET "default" 0;
+           transition: LINEAR 0.5;
+           target: "buttonb";
+        }
+
+        program {
+           name: "btnunhovert";
+           signal: "mouse,up,1";
+           source: "buttont";
+           action: STATE_SET "default" 0;
+           transition: LINEAR 0.5;
+           target: "buttont";
+        }
+      
+    }
+}
+
