@@ -328,12 +328,13 @@ def configure(*args, **kwargs):
   hbox1 = elementary.Box(win)
   hbox1.size_hint_weight_set(1.0, 0.0)
   hbox1.size_hint_align_set(-1.0, 0.0)
-  hbox1.horizontal_set(True)
+  #hbox1.horizontal_set(True)
   obox.pack_end(hbox1)
   hbox1.show()
 
   loginl = elementary.Label(win)
   loginl.label_set('Login: ')
+  loginl.size_hint_align_set(-1.0, 0.0)
   loginl.show()
   hbox1.pack_start(loginl)
 
@@ -356,12 +357,13 @@ def configure(*args, **kwargs):
   hbox2 = elementary.Box(win)
   hbox2.size_hint_weight_set(1.0, 0.0)
   hbox2.size_hint_align_set(-1.0, 0.0)
-  hbox2.horizontal_set(True)
+  #hbox2.horizontal_set(True)
   obox.pack_end(hbox2)
   hbox2.show()
 
   passl = elementary.Label(win)
   passl.label_set('Password: ')
+  passl.size_hint_align_set(-1.0, 0.0)
   passl.show()
   hbox2.pack_start(passl)
 
