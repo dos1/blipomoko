@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-
-print "Blipomoko"
+VERSION = 'pre-0.1'
+print "Blipomoko " + VERSION
 
 #import blipapi
 from blipapi import BlipApi
@@ -11,7 +11,7 @@ import os
 import ConfigParser
 
 CONFIG_FILE = os.path.expanduser('~')+'/.blipomoko'
-UAGENT = 'Blipomoko pre-0.1'
+UAGENT = 'Blipomoko '+VERSION
 
 login = None
 password = None
