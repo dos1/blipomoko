@@ -87,7 +87,7 @@ def display_error(update):
   dia.activate()
 
 def check_success(update):
-  if update['status_code']==200:
+  if update['status_code']==200 or update['status_code']==201:
     return True
   else:
     display_error(update)
@@ -109,16 +109,39 @@ def parse_updates(updates):
       else:
         unknown(update)
 
+def go_browser(url,*args,**kargs):
+  os.system('links -g '+url+' &') #FIXME: don't hardcode browser
+
+def go_picture(url,*args,**kargs):
+  #url = '/updates/' + str (id) + '/pictures'
+  url = url[9:]
+  url = url[:len(url)-9]
+  pics = blip.picture_read(url)
+  for pic in pics['body']:
+    go_browser( pic['url'] )
+
 def handle_status(update):
+  box = elementary.Box(win)
+  box.horizontal_set(True)
+  box.show()
   anch = elementary.AnchorBlock(win)
+  anch.size_hint_align_set(-1.0,-1.0)
+  anch.size_hint_weight_set(1.0,1.0)
   body = entry.utf8_to_markup(update['body'])
+  box.pack_start(anch)
   if 'pictures_path' in update:
-    body = body + ' [FOTO]'
+    foto = elementary.Button(win)
+    foto.label_set('FOTO')
+    foto.size_hint_align_set(1.0,-1.0)
+    foto.size_hint_weight_set(0.0,1.0)
+    foto.clicked = partial(go_picture, update['pictures_path'])
+    foto.show()
+    box.pack_end(foto)
   anch.text_set(body)
   anch.show()
   fr = elementary.Frame(win)
   fr.label_set(nick_from_user(update['user_path'])+':')
-  fr.content_set(anch)
+  fr.content_set(box)
   fr.size_hint_align_set(-1.0,0.0)
   fr.size_hint_weight_set(1.0,0.0)
   fr.show()
@@ -202,12 +225,13 @@ def clean_blibox():
 
 def post_blip(obj, *args, **kwargs):
   global entrydefault
-  text=utnij(entry.markup_to_utf8(entry.entry_get()))
-  if check_success(blip.update_create(body=text)):
-    clean_blibox()
-    entry.entry_set('Type your entry here...')
-    entrydefault = True
-    dashboard()
+  if not entrydefault:
+    text=utnij(entry.markup_to_utf8(entry.entry_get()))
+    if check_success(blip.update_create(body=text)):
+      clean_blibox()
+      entry.entry_set('Type your entry here...')
+      entrydefault = True
+      dashboard()
 
 def update_clicked(obj, *args, **kwargs):
   global entrydefault
