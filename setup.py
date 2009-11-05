@@ -26,7 +26,7 @@ class my_clean(_clean):
 
 setup(
     name = "blipomoko",
-    version = "0.1.0",
+    version = "0.1.99",
     author = "Sebastian Krzyszkowiak (dos)",
     author_email = "seba.dos1@gmail.com",
     url = "http://wiki.github.com/dos1/blipomoko",
