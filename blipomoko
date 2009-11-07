@@ -6,6 +6,8 @@ import blipapi
 import elementary, edje
 from functools import partial
 import os, ConfigParser
+from ecore import timer_add
+import re
 
 CONFIG_FILE = os.path.expanduser('~')+'/.blipomoko'
 UAGENT = 'Blipomoko '+VERSION
@@ -90,6 +92,35 @@ def check_success(update):
     display_error(update)
     return False
 
+def anchorClicked (text, obj, event, sth):
+  print text
+  print obj
+  print event
+  print sth
+  #obj.hover_end()
+  dia = elementary.InnerWindow(win)
+  win.resize_object_add(dia)
+  dia.show()
+  dia.style_set('minimal')
+  label = elementary.Label(win)
+  label.label_set("Not yet implemented")
+  label.show()
+  dia.content_set(label)
+  dia.activate()
+  timer_add(2, partial(close_more, dia)) 
+
+def parse_text(text):
+  r = re.compile(r"(http://[^ ]+)") 
+  text = r.sub(r'<a href="\1">\1</a>', text)
+
+  r = re.compile(r"(\#[^ ]+)")
+  text = r.sub(r'<a href="\1">\1</a>', text)
+
+  r = re.compile(r"(\^[^ ]+)")
+  text = r.sub(r'<a href="\1">\1</a>', text)
+
+  return text
+
 def parse_updates(updates):
   if check_success(updates):
     updates=updates['body']
@@ -125,6 +156,8 @@ def handle_status(update):
   anch.size_hint_align_set(-1.0,-1.0)
   anch.size_hint_weight_set(1.0,1.0)
   body = entry.utf8_to_markup(update['body'])
+  body = parse_text(body)
+#  anch._callback_add('anchor,clicked',partial(anchorClicked, body))
   box.pack_start(anch)
   if 'pictures_path' in update:
     foto = elementary.Button(win)
@@ -149,6 +182,7 @@ def handle_directed(update):
 #  print nick_from_user(update['user_path']) + '>'+nick_from_user(update['recipient_path'])+': ' + update['body']
   anch = elementary.AnchorBlock(win)
   body = entry.utf8_to_markup(update['body'])
+  body = parse_text(body)
   anch.text_set(body)
   anch.show()
   fr = elementary.Frame(win)
@@ -164,6 +198,7 @@ def handle_private(update):
 #  print nick_from_user(update['user_path']) + ' >> '+nick_from_user(update['recipient_path'])+': ' + update['body']
   anch = elementary.AnchorBlock(win)
   body = entry.utf8_to_markup(update['body'])
+  body = parse_text(body)
   anch.text_set(body)
   anch.show()
   fr = elementary.Frame(win)
@@ -178,6 +213,7 @@ def handle_private(update):
 def handle_notice(update):
   anch = elementary.AnchorBlock(win)
   body = entry.utf8_to_markup(update['body'])
+  body = parse_text(body)
   anch.text_set(body)
   anch.size_hint_align_set(-1.0,0.5)
   anch.size_hint_weight_set(1.0,0.0)
