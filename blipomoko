@@ -97,7 +97,7 @@ def anchorClicked (text, obj, event, sth):
   print obj
   print event
   print sth
-  #obj.hover_end()
+  obj.hover_end()
   dia = elementary.InnerWindow(win)
   win.resize_object_add(dia)
   dia.show()
@@ -113,10 +113,11 @@ def parse_text(text):
   r = re.compile(r"(http://[^ ]+)") 
   text = r.sub(r'<a href="\1">\1</a>', text)
 
-  r = re.compile(r"(\#[^ ]+)")
+  r = re.compile(r"(\#[^ \.\-\,\[\]\(\)\;\:\'\"\/\=]+)")
   text = r.sub(r'<a href="\1">\1</a>', text)
-
-  r = re.compile(r"(\^[^ ]+)")
+  # TODO: check for alphanumerals instead of checking for
+  #       special chars!
+  r = re.compile(r"(\^[^ \.\-\,\[\]\(\)\;\:\'\"\/\=]+)")
   text = r.sub(r'<a href="\1">\1</a>', text)
 
   return text
@@ -157,7 +158,7 @@ def handle_status(update):
   anch.size_hint_weight_set(1.0,1.0)
   body = entry.utf8_to_markup(update['body'])
   body = parse_text(body)
-#  anch._callback_add('anchor,clicked',partial(anchorClicked, body))
+  anch._callback_add('anchor,clicked',partial(anchorClicked, body))
   box.pack_start(anch)
   if 'pictures_path' in update:
     foto = elementary.Button(win)
