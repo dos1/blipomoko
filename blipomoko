@@ -277,7 +277,10 @@ def update_clicked(obj, *args, **kwargs):
     entrydefault=False
 
 def update_chars(obj, *args, **kwargs):
-  entryleft.label_set("%d chars left" % (160-len(obj.markup_to_utf8(obj.entry_get()))))
+  text = obj.markup_to_utf8(obj.entry_get())
+  if not text:
+    text = ''
+  entryleft.label_set("%d chars left" % (160-len(text)))
 
 def display_dashboard(*args,**kwargs):
   global entrydefault
