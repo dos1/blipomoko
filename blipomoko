@@ -123,6 +123,7 @@ def parse_text(text):
   return text
 
 def parse_updates(updates):
+  print updates
   if check_success(updates):
     updates=updates['body']
     updates.reverse()
@@ -260,7 +261,7 @@ def clean_blibox():
 def post_blip(obj, *args, **kwargs):
   global entrydefault
   if not entrydefault:
-    text=utnij(entry.markup_to_utf8(entry.entry_get()))
+    text=entry.markup_to_utf8(entry.entry_get())
     if check_success(blip.update_create(body=text)):
       clean_blibox()
       entry.entry_set('Type your entry here...')
@@ -273,20 +274,15 @@ def update_clicked(obj, *args, **kwargs):
     entry.entry_set('')
     entrydefault=False
 
-def utnij(text):
-  if text.endswith('\n'):
-    text=text[:len(text)-1]
-  return text
-
 def update_chars(obj, *args, **kwargs):
-  entryleft.label_set("%d chars left" % (160-len(utnij(obj.markup_to_utf8(obj.entry_get())))))
+  entryleft.label_set("%d chars left" % (160-len(obj.markup_to_utf8(obj.entry_get()))))
 
 def display_dashboard(*args,**kwargs):
   global entrydefault
   if entrydefault:
     nick=None
   else:
-    nick=utnij(entry.markup_to_utf8(entry.entry_get()))
+    nick=entry.markup_to_utf8(entry.entry_get())
   clean_blibox()
   entry.entry_set('Type your entry here...')
   entrydefault = True
@@ -298,7 +294,7 @@ def display_updates(*args,**kwargs):
   if entrydefault:
     nick=None
   else:
-    nick=utnij(entry.markup_to_utf8(entry.entry_get()))
+    nick=entry.markup_to_utf8(entry.entry_get())
   clean_blibox()
   entry.entry_set('Type your entry here...')
   entrydefault = True
@@ -319,7 +315,7 @@ def display_tag(dia,*args,**kwargs):
   if not entrydefault:
     dia.delete()
     clean_blibox()
-    tag(utnij(entry.markup_to_utf8(entry.entry_get())))
+    tag(entry.markup_to_utf8(entry.entry_get()))
     entry.entry_set('Type your entry here...')
     entrydefault = True
     layout.edje_get().signal_emit('dol,hide','blip,app')
@@ -328,8 +324,8 @@ def display_tag(dia,*args,**kwargs):
 
 def close_conf(logine, passworde, dia, *args, **kwargs):
   global login, password
-  login = utnij(logine.markup_to_utf8(logine.entry_get()))
-  password = utnij(passworde.markup_to_utf8(passworde.entry_get()))
+  login = logine.markup_to_utf8(logine.entry_get())
+  password = passworde.markup_to_utf8(passworde.entry_get())
   save_auth(login, password)
   close_more(dia)
   blip_connect()
