@@ -80,7 +80,7 @@ def display_error(update):
   button.size_hint_align_set(-1.0, -1.0)
   button.size_hint_weight_set(1.0, 1.0)
   button.show()
-  button.clicked = partial(close_more, dia)
+  button._callback_add('clicked', partial(close_more, dia))
   box.pack_start(frame)
   box.pack_end(button)
   dia.activate()
@@ -92,10 +92,9 @@ def check_success(update):
     display_error(update)
     return False
 
-def anchorClicked (text, obj, event, sth):
+def anchorClicked (text, obj, sth):
   print text
   print obj
-  print event
   print sth
   obj.hover_end()
   dia = elementary.InnerWindow(win)
@@ -166,7 +165,7 @@ def handle_status(update):
     foto.label_set('FOTO')
     foto.size_hint_align_set(1.0,-1.0)
     foto.size_hint_weight_set(0.0,1.0)
-    foto.clicked = partial(go_picture, update['pictures_path'])
+    foto._callback_add('clicked', partial(go_picture, update['pictures_path']))
     foto.show()
     box.pack_end(foto)
   anch.text_set(body)
@@ -425,7 +424,7 @@ def configure(*args, **kwargs):
   button = elementary.Button(win)
   button.label_set("Close")
   button.show()
-  button.clicked = partial(close_conf, logine, passworde, dia)
+  button._callback_add('clicked', partial(close_conf, logine, passworde, dia))
   button.size_hint_weight_set(-1.0, 0.0)
   button.size_hint_align_set(-1.0, 0.0)
   box.pack_end(button)
@@ -444,7 +443,7 @@ def display_more(*args, **kwargs):
   dia.show()
   spherebtn = elementary.Button(win)
   spherebtn.label_set('Bliposphere')
-  spherebtn.clicked = partial(display_bliposphere, dia)
+  spherebtn._callback_add('clicked', partial(display_bliposphere, dia))
   spherebtn.size_hint_align_set(-1.0,-1.0)
   spherebtn.size_hint_weight_set(1.0,1.0)
   spherebtn.show()
@@ -452,7 +451,7 @@ def display_more(*args, **kwargs):
 
   tagbtn = elementary.Button(win)
   tagbtn.label_set('Tag')
-  tagbtn.clicked = partial(display_tag, dia)
+  tagbtn._callback_add('clicked', partial(display_tag, dia))
   tagbtn.size_hint_align_set(-1.0,-1.0)
   tagbtn.size_hint_weight_set(1.0,1.0)
   tagbtn.show()
@@ -464,7 +463,7 @@ def display_more(*args, **kwargs):
 
   closebtn = elementary.Button(win)
   closebtn.label_set('Close')
-  closebtn.clicked = partial(close_more, dia)
+  closebtn._callback_add('clicked', partial(close_more, dia))
   closebtn.size_hint_align_set(-1.0,-1.0)
   closebtn.size_hint_weight_set(1.0,1.0)
   closebtn.show()
@@ -487,7 +486,7 @@ win = elementary.Window('blipomoko',0);
 bg = elementary.Background(win)
 bg.show()
 win.title_set('Blipomoko')
-win.destroy = destroy
+win.callback_destroy_add(destroy)
 win.show()
 box = elementary.Box(win)
 box.show()
@@ -497,7 +496,7 @@ layout.file_set('/usr/share/blipomoko/blipomoko.edj', 'layout')
 layout.show()
 layout.content_set('bg', bg)
 
-#def handler(obj, event, name, *args, **kargs):
+#def handler(obj, name, *args, **kargs):
 #  print name+': '+event
 #layout.edje_get().signal_callback_add('*', '*', handler)
 
@@ -533,7 +532,7 @@ entrybox.pack_start(entryscr)
 entryleft = elementary.Label(win)
 entryleft.label_set('? chars left')
 entryleft.show()
-entry.changed = update_chars
+entry._callback_add('changed', update_chars)
 entryleft.size_hint_align_set(1.0,1.0)
 entrybox.pack_end(entryleft)
 
@@ -553,7 +552,7 @@ topbox.pack_end(rightbox)
 
 post = elementary.Button(win)
 post.label_set(' Post it! ')
-post.clicked = post_blip
+post._callback_add('clicked', post_blip)
 post.show()
 post.size_hint_align_set(-1.0, -1.0)
 post.size_hint_weight_set(0.0,1.0)
@@ -581,7 +580,7 @@ layout.content_set('dol', bottombox)
 
 dashbtn = elementary.Button(win)
 dashbtn.label_set('Dashboard')
-dashbtn.clicked = display_dashboard
+dashbtn._callback_add('clicked', display_dashboard)
 dashbtn.size_hint_align_set(-1.0,-1.0)
 dashbtn.size_hint_weight_set(1.0,1.0)
 dashbtn.show()
@@ -589,7 +588,7 @@ bottombox.pack_start(dashbtn)
 
 updatesbtn = elementary.Button(win)
 updatesbtn.label_set('Bliplog')
-updatesbtn.clicked = display_updates
+updatesbtn._callback_add('clicked', display_updates)
 updatesbtn.size_hint_align_set(-1.0,-1.0)
 updatesbtn.size_hint_weight_set(1.0,1.0)
 updatesbtn.show()
@@ -597,7 +596,7 @@ bottombox.pack_end(updatesbtn)
 
 morebtn = elementary.Button(win)
 morebtn.label_set('More')
-morebtn.clicked = display_more
+morebtn._callback_add('clicked', display_more)
 morebtn.size_hint_align_set(-1.0,-1.0)
 morebtn.size_hint_weight_set(1.0,1.0)
 morebtn.show()
@@ -605,7 +604,7 @@ bottombox.pack_end(morebtn)
 
 #spherebtn = elementary.Button(win)
 #spherebtn.label_set('Bliposphere')
-#spherebtn.clicked = display_bliposphere
+#spherebtn._callback_add('clicked', display_bliposphere)
 #spherebtn.size_hint_align_set(-1.0,-1.0)
 #spherebtn.size_hint_weight_set(1.0,1.0)
 #spherebtn.show()
@@ -613,7 +612,7 @@ bottombox.pack_end(morebtn)
 
 confbtn = elementary.Button(win)
 confbtn.label_set('Config')
-confbtn.clicked = configure
+confbtn._callback_add('clicked', configure)
 confbtn.size_hint_align_set(-1.0,-1.0)
 confbtn.size_hint_weight_set(1.0,1.0)
 confbtn.show()
