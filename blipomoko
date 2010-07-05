@@ -248,6 +248,7 @@ def handle_notice(update):
   anch = elementary.AnchorBlock(win)
   body = entry.utf8_to_markup(update['body'])
   (body, urls, tags, users) = parse_text(body)
+  anch._callback_add('anchor,clicked',partial(anchorClicked, urls, tags, users))
   anch.text_set(body)
   anch.size_hint_align_set(-1.0,0.5)
   anch.size_hint_weight_set(1.0,0.0)
