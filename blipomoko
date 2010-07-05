@@ -92,37 +92,68 @@ def check_success(update):
     display_error(update)
     return False
 
-def anchorClicked (text, obj, sth):
-  print text
-  print obj
-  print sth
+def anchorClicked (urls, tags, users, obj):
   obj.hover_end()
   dia = elementary.InnerWindow(win)
   win.resize_object_add(dia)
   dia.show()
-  dia.style_set('minimal')
+  #dia.style_set('minimal')
   label = elementary.Label(win)
-  label.label_set("Not yet implemented")
+  label.label_set("Select anchor to be opened:")
   label.show()
-  dia.content_set(label)
+
+  box = elementary.Box(win)
+  box.pack_start(label)
+
+  list = elementary.List(win)
+  list.size_hint_align_set(-1.0, -1.0)
+  list.size_hint_weight_set(1.0, 1.0)
+  list.show()
+
+  for url in urls:
+    list.item_append(url, None, None, partial(close_more, dia, callback=partial(go_browser, url)))
+
+  for t in tags:
+    list.item_append(t, None, None, partial(close_more, dia, callback=partial(tag, t[1:])))
+
+  for nick in users:
+    list.item_append(nick, None, None, partial(close_more, dia, callback=partial(dashboard, nick[1:])))
+
+  list.go()
+
+  box.pack_end(list)
+
+  quit = elementary.Button(win)
+  quit.size_hint_align_set(-1.0, 0.0)
+  quit.label_set('Back')
+  quit.callback_clicked_add(partial(close_more, dia))
+  quit.show()
+
+  box.pack_end(quit)
+
+  box.show()
+
+  dia.content_set(box)
   dia.activate()
-  timer_add(2, partial(close_more, dia)) 
 
 def parse_text(text):
   r = re.compile(r"(http://[^ ]+)") 
-  text = r.sub(r'<a href="\1">\1</a>', text)
+  text2 = r.sub(r'<a href="\1">\1</a>', text)
+  urls = r.findall(text)
 
-  r = re.compile(r"(\#[^ \.\-\,\[\]\(\)\;\:\'\"\/\=]+)")
-  text = r.sub(r'<a href="\1">\1</a>', text)
+  r = re.compile(r"(\#[^ \.\-\,\[\]\(\)\;\:\'\"\/\=\?]+)")
+  tags = r.findall(text)
+  text2 = r.sub(r'<a href="\1">\1</a>', text2)
   # TODO: check for alphanumerals instead of checking for
   #       special chars!
-  r = re.compile(r"(\^[^ \.\-\,\[\]\(\)\;\:\'\"\/\=]+)")
-  text = r.sub(r'<a href="\1">\1</a>', text)
+  r = re.compile(r"(\^[^ \.\-\,\[\]\(\)\;\:\'\"\/\=\?]+)")
+  users = r.findall(text)
+  text2 = r.sub(r'<a href="\1">\1</a>', text2)
 
-  return text
+  return (text2, urls, tags, users)
 
 def parse_updates(updates):
-  print updates
+  #print updates
   if check_success(updates):
     updates=updates['body']
     updates.reverse()
@@ -157,8 +188,8 @@ def handle_status(update):
   anch.size_hint_align_set(-1.0,-1.0)
   anch.size_hint_weight_set(1.0,1.0)
   body = entry.utf8_to_markup(update['body'])
-  body = parse_text(body)
-  anch._callback_add('anchor,clicked',partial(anchorClicked, body))
+  (body, urls, tags, users) = parse_text(body)
+  anch._callback_add('anchor,clicked',partial(anchorClicked, urls, tags, users))
   box.pack_start(anch)
   if 'pictures_path' in update:
     foto = elementary.Button(win)
@@ -183,8 +214,8 @@ def handle_directed(update):
 #  print nick_from_user(update['user_path']) + '>'+nick_from_user(update['recipient_path'])+': ' + update['body']
   anch = elementary.AnchorBlock(win)
   body = entry.utf8_to_markup(update['body'])
-  body = parse_text(body)
-  anch._callback_add('anchor,clicked',partial(anchorClicked, body))
+  (body, urls, tags, users) = parse_text(body)
+  anch._callback_add('anchor,clicked',partial(anchorClicked, urls, tags, users))
   anch.text_set(body)
   anch.show()
   fr = elementary.Frame(win)
@@ -200,8 +231,8 @@ def handle_private(update):
 #  print nick_from_user(update['user_path']) + ' >> '+nick_from_user(update['recipient_path'])+': ' + update['body']
   anch = elementary.AnchorBlock(win)
   body = entry.utf8_to_markup(update['body'])
-  body = parse_text(body)
-  anch._callback_add('anchor,clicked',partial(anchorClicked, body))
+  (body, urls, tags, users) = parse_text(body)
+  anch._callback_add('anchor,clicked',partial(anchorClicked, urls, tags, users))
   anch.text_set(body)
   anch.show()
   fr = elementary.Frame(win)
@@ -216,7 +247,7 @@ def handle_private(update):
 def handle_notice(update):
   anch = elementary.AnchorBlock(win)
   body = entry.utf8_to_markup(update['body'])
-  body = parse_text(body)
+  (body, urls, tags, users) = parse_text(body)
   anch.text_set(body)
   anch.size_hint_align_set(-1.0,0.5)
   anch.size_hint_weight_set(1.0,0.0)
@@ -431,6 +462,8 @@ def configure(*args, **kwargs):
 
 
 def close_more(dia, *args, **kwargs):
+  if kwargs.has_key('callback'):
+    kwargs['callback']()
   dia.delete()
 
 def display_more(*args, **kwargs):
